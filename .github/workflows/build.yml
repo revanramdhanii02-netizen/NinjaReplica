@@ -4,6 +4,9 @@ name: Build NinjaReplica APK
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,16 +24,30 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Check source ZIP
+        run: |
+          test -f NinjaReplica-Android-Source-fixed.zip
+          unzip -t NinjaReplica-Android-Source-fixed.zip
+
       - name: Extract Android project
         run: |
-          unzip -o NinjaReplica-Android-Source.zip -d extracted
+          mkdir -p extracted
+          unzip -o NinjaReplica-Android-Source-fixed.zip -d extracted
           find extracted -name settings.gradle -type f
 
       - name: Fix Java and Kotlin JVM targets
         run: |
           PROJECT_DIR="$(dirname "$(find extracted -name settings.gradle -type f | head -n 1)")"
+
+          if [ -z "$PROJECT_DIR" ] || [ ! -f "$PROJECT_DIR/app/build.gradle" ]; then
+            echo "ERROR: Android project or app/build.gradle not found"
+            exit 1
+          fi
+
           FILE="$PROJECT_DIR/app/build.gradle"
-          cat >> "$FILE" <<'EOF'
+
+          if ! grep -q 'sourceCompatibility JavaVersion.VERSION_21' "$FILE"; then
+            cat >> "$FILE" <<'EOF'
 
           android {
               compileOptions {
@@ -42,6 +59,7 @@ jobs:
               }
           }
           EOF
+          fi
 
       - name: Build APK
         run: |
