@@ -26,16 +26,16 @@ jobs:
 
       - name: Check source ZIP
         run: |
-          test -f NinjaReplica-Android-Source-fixed.zip
-          unzip -t NinjaReplica-Android-Source-fixed.zip
+          test -f NinjaReplica-Billiards-Demo-Source.zip
+          unzip -t NinjaReplica-Billiards-Demo-Source.zip
 
       - name: Extract Android project
         run: |
           mkdir -p extracted
-          unzip -o NinjaReplica-Android-Source-fixed.zip -d extracted
+          unzip -o NinjaReplica-Billiards-Demo-Source.zip -d extracted
           find extracted -name settings.gradle -type f
 
-      - name: Fix Java and Kotlin JVM targets
+      - name: Configure Android project
         run: |
           PROJECT_DIR="$(dirname "$(find extracted -name settings.gradle -type f | head -n 1)")"
 
@@ -46,7 +46,7 @@ jobs:
 
           FILE="$PROJECT_DIR/app/build.gradle"
 
-          if ! grep -q 'sourceCompatibility JavaVersion.VERSION_21' "$FILE"; then
+          if ! grep -q "sourceCompatibility JavaVersion.VERSION_21" "$FILE"; then
             cat >> "$FILE" <<'EOF'
 
           android {
